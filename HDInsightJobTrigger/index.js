@@ -18,6 +18,7 @@ module.exports = function (context, checkTimer) {
   }
 
   // 1. Check statuses
+  context.log('Initializing statuses');
   var hdinsightManager = new HDInsightManager();
   var functionsManager = new FunctionsManager();
   var appServiceClient = null;
@@ -130,6 +131,8 @@ module.exports = function (context, checkTimer) {
   
   // 1.1. Get queue count from azure storage queue
   function checkQueue(callback) {
+
+    context.log('Checking queue size');
     var queueSvc = azure.createQueueService(config.clusterStorageAccountName, config.clusterStorageAccountKey);
     queueSvc.createQueueIfNotExists(config.inputQueueName, function(err, result, response){
       if (err) {
@@ -144,6 +147,7 @@ module.exports = function (context, checkTimer) {
         }
 
         status.queueLength = result.approximateMessageCount;
+        context.log('Queue size: ' + status.queueLength);
         return callback();
       });
     });
@@ -151,6 +155,7 @@ module.exports = function (context, checkTimer) {
 
   // 1.2. Get function state from ARM
   function checkFunction(callback) {
+    context.log('Checking proxy app');
     functionsManager.init(function (err, _appServiceClient) {
       if (err) {
         status.funcError = err;
@@ -165,6 +170,7 @@ module.exports = function (context, checkTimer) {
         }
 
         status.funcActive = result && result.properties && result.properties.state == 'Running';
+        context.log('proxy app active: ' + status.funcActive);
         return callback();
       })
     });
@@ -172,6 +178,8 @@ module.exports = function (context, checkTimer) {
 
   // 1.3. Get HDInsight state from ARM
   function checkHDInsight(callback) {
+
+    context.log('Checking hdinsight');
     hdinsightManager.init(function (err) {
 
       if (err) {
@@ -195,6 +203,7 @@ module.exports = function (context, checkTimer) {
           status.hdinsightError = new Error('The resulting resource is not in an expected format: ' + result);
         }
 
+        context.log('hdinsight state: ' + status.hdinsightStatus);
         return callback();
       });
 
@@ -210,6 +219,8 @@ module.exports = function (context, checkTimer) {
       headers: { "Authorization": authenticationHeader },
       json: { }
     };
+
+    context.log('Checking livy state');
     request(options, function (err, response, body) {
 
       if (err || !response || response.statusCode != 200) {
@@ -221,13 +232,14 @@ module.exports = function (context, checkTimer) {
 
       // Need to check validity and probably filter only running jobs
       status.livyJobs = response.batches.length;
+      context.log('livy jobs: ' + status.livyJobs);
       return callback();
     });
   }
 
   function sendAlert(alert) {
 
-    context.log('Error: ' + alert);
+    context.log('ALERT: ' + alert);
 
     var options = {
       uri: sendAlertUrl,
