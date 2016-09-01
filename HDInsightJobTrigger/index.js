@@ -2,7 +2,6 @@ var azure = require('azure-storage');
 var async = require('async');
 var request = require('request');
 
-var config = require('./config');
 var FunctionsManager = require('./manage-functions');
 var HDInsightManager = require('./manage-hdinsight');
 
@@ -14,6 +13,13 @@ module.exports = function (context, checkTimer) {
   if (checkTimer.isPastDue)
   {
     context.log('Check Timer is running late...');
+  }
+
+  var config = null;
+  try {
+    var config = require('./config');
+  } catch (e) {
+    return context.done(e);
   }
 
   // 1. Check statuses
