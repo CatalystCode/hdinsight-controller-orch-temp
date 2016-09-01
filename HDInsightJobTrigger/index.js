@@ -2,8 +2,8 @@ var azure = require('azure-storage');
 var async = require('async');
 var request = require('request');
 
-var FunctionsManager = require('./manage-functions');
-var HDInsightManager = require('./manage-hdinsight');
+//var FunctionsManager = require('./manage-functions');
+//var HDInsightManager = require('./manage-hdinsight');
 
 var lastInactiveCheck = null;
 var MAX_INACTIVE_TIME = 15; // Minutes
@@ -15,9 +15,11 @@ module.exports = function (context, checkTimer) {
     context.log('Check Timer is running late...');
   }
 
+  return context.done();
+
   var config = null;
   try {
-    var config = require('./config');
+    config = require('./config');
   } catch (e) {
     return context.done(e);
   }
