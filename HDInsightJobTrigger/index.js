@@ -58,17 +58,23 @@ module.exports = function (context, checkTimer) {
     // Queue not empty
     // ================
     // 2. If queue is not empty && HDInsight is ResourceNotFound ==> create HDInsight
+    context.log('If queue is not empty && HDInsight is ResourceNotFound ==> create HDInsight');
     if (status.queueLength > 0 && status.hdinsightStatus == 'ResourceNotFound') {
+      context.log('Creating hdinsight');
       return hdinsightManager.createHDInsight(function (err) {
         if (err) { sendAlert({ error: err }); }
+        context.log('Operation completed successfully');
         return context.done();
       })
     }
 
     // 3. If queue is not empty && HDInsight is Running && Livy is alive && function is down ==> wake up function
+    context.log('If queue is not empty && HDInsight is Running && Livy is alive && function is down ==> wake up function');
     if (status.queueLength > 0 && status.hdinsightStatus == 'Running' && !status.funcActive) {
+      context.log('Starting proxy app');
       return appServiceClient.start(function (err) {
         if (err) { sendAlert({ error: err }); }
+        context.log('Operation completed successfully');
         return context.done();
       });
     }
@@ -76,26 +82,32 @@ module.exports = function (context, checkTimer) {
     // Queue is empty
     // ================
     // 4. If queue is empty && Livy jobs == 0 && function is up | more than 15 minutes ==> shut down functions
+    context.log('If queue is empty && Livy jobs == 0 && function is up | more than 15 minutes ==> shut down functions');
     if (status.queueLength === 0 && status.livyJobs === 0 && status.hdinsightStatus != 'ResourceNotFound' && status.funcActive) {
       var now = new Date();
       if (!lastInactiveCheck) {
         lastInactiveCheck = now;
+        context.log('Operation completed successfully - initialized check time');
         return context.done();
       }
 
       if (getMinutes(now - lastInactiveCheck) >= MAX_INACTIVE_TIME) {
+        context.log('Stopping proxy app');
         return appServiceClient.stop(function (err) {
           if (err) { sendAlert({ error: err }); }
+          context.log('Operation completed successfully');
           return context.done();
         })
       }
     }
     
     // 5. If queue is empty && Livy jobs == 0 && function is down | more than 15 minutes ==> shut down HDInsight
+    context.log('If queue is empty && Livy jobs == 0 && function is down | more than 15 minutes ==> shut down HDInsight');
     if (status.queueLength === 0 && status.livyJobs === 0 && status.hdinsightStatus != 'ResourceNotFound' && status.funcActive) {
       var now = new Date();
       if (!lastInactiveCheck) {
         lastInactiveCheck = now;
+        context.log('Operation completed successfully - initialized check time');
         return context.done();;
       }
 
@@ -107,6 +119,7 @@ module.exports = function (context, checkTimer) {
           else {
             lastInactiveCheck = now; // If after 15 minutes hdinsight not down, try to delete again
           }
+          context.log('Operation completed successfully');
           return context.done();
         })
       }
@@ -213,6 +226,8 @@ module.exports = function (context, checkTimer) {
   }
 
   function sendAlert(alert) {
+
+    context.log('Error: ' + alert);
 
     var options = {
       uri: sendAlertUrl,
