@@ -1,5 +1,4 @@
 var azure = require('azure-storage');
-var Promise = require('promise');
 var async = require('async');
 var request = require('request');
 
