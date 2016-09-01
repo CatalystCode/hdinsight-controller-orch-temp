@@ -6,7 +6,7 @@ var config = {
 
   resourceGroupName: ensureValue('resourceGroupName'),
   clusterName: ensureValue('clusterName'),
-  functionAppName: ensureValue('functionAppName'),
+  functionAppName: ensureValue('proxyAppName'),
   location: ensureValue('location'),
   clusterApiVersion: ensureValue('clusterApiVersion'),
   tags: ensureValue('tags', JSON.parse),
